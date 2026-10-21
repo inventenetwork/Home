@@ -12,20 +12,26 @@ const TRUST = [
 const STEPS = ['home.step1', 'home.step2', 'home.step3'];
 const AREAS = ['Kuching', 'Sibu', 'Petaling Jaya', 'Subang', 'Kepong'];
 
-// A friendly house with sparkles. Constant, trusted markup.
-const HERO_ART = `<svg viewBox="0 0 320 260" role="img" aria-label="" width="320" height="260">
-  <circle cx="160" cy="130" r="118" fill="#ffffff" fill-opacity="0.10"/>
-  <circle cx="160" cy="130" r="84" fill="#ffffff" fill-opacity="0.10"/>
-  <path d="M70 130l90-72 90 72v84a8 8 0 01-8 8H78a8 8 0 01-8-8z" fill="#ffffff"/>
-  <path d="M58 134l102-82 102 82" fill="none" stroke="#fbbf24" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-  <rect x="136" y="160" width="48" height="62" rx="6" fill="#0f766e"/>
-  <circle cx="174" cy="192" r="3.5" fill="#fbbf24"/>
-  <rect x="88" y="148" width="34" height="30" rx="5" fill="#99e6dc"/>
-  <rect x="198" y="148" width="34" height="30" rx="5" fill="#99e6dc"/>
-  <path d="M252 62l4 12 12 4-12 4-4 12-4-12-12-4 12-4z" fill="#fbbf24"/>
-  <path d="M64 70l3 8 8 3-8 3-3 8-3-8-8-3 8-3z" fill="#ffffff"/>
-  <path d="M276 150l2.5 6 6 2.5-6 2.5-2.5 6-2.5-6-6-2.5 6-2.5z" fill="#ffffff" fill-opacity="0.8"/>
-</svg>`;
+const LOCK = ICON('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>');
+
+/** Decorative example cards (not real data). */
+function heroCards() {
+  return h('div', { class: 'landing-art', 'aria-hidden': 'true' },
+    h('div', { class: 'fcard fcard-main' },
+      h('small', {}, t('home.card.when')),
+      h('strong', {}, t('home.card.service')),
+      h('div', { class: 'row' }, h('span', { class: 'fcard-tag' }, t('home.card.confirmed')), h('span', { class: 'fcard-price' }, 'RM 80.00')),
+    ),
+    h('div', { class: 'fcard fcard-vendor' },
+      h('span', { class: 'avatar' }, 'AR'),
+      h('div', {}, h('strong', {}, t('home.card.vendor')), h('small', {}, t('home.card.vendorSub')), h('span', { class: 'stars' }, '★★★★★')),
+    ),
+    h('div', { class: 'fcard fcard-pay' },
+      svg(LOCK, 'lock'),
+      h('div', {}, h('strong', {}, t('home.card.held')), h('small', {}, t('home.card.heldSub'))),
+    ),
+  );
+}
 
 /** "From RM x": the price with minimum quantity and default options, straight from the server's estimate. */
 async function fromPrice(slug) {
@@ -64,6 +70,7 @@ export async function homePage() {
       : h('a', { class: 'card service-card', href: `#/book/${s.slug}`, 'data-tone': String(i % 5) }, inner);
   });
 
+  const quick = services.filter((s) => s.pricingModel !== 'quote').slice(0, 4);
   const toServices = () => document.getElementById('services')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   return h('div', { class: 'landing' },
@@ -71,14 +78,19 @@ export async function homePage() {
       h('div', { class: 'container landing-hero-inner' },
         h('div', { class: 'landing-copy' },
           h('p', { class: 'eyebrow' }, t('home.eyebrow')),
-          h('h1', {}, t('home.title')),
+          h('h1', {}, t('home.title.a'), ' ', h('span', { class: 'gold-text' }, t('home.title.b'))),
           h('p', { class: 'landing-sub' }, t('home.sub')),
           h('div', { class: 'landing-cta' },
             h('button', { class: 'btn btn-accent btn-lg', type: 'button', onclick: toServices }, t('home.cta')),
             h('a', { class: 'btn btn-ghost btn-lg', href: '#/login?as=provider', 'data-join-provider': true }, t('home.cta.provider')),
           ),
+          quick.length
+            ? h('div', { class: 'quick' },
+                h('p', { class: 'quick-label' }, t('home.popular')),
+                h('ul', { class: 'quick-list' }, quick.map((s) => h('li', {}, h('a', { class: 'quick-link', href: `#/book/${s.slug}` }, serviceIcon(s.slug), s.name)))))
+            : null,
         ),
-        svg(HERO_ART, 'landing-art'),
+        heroCards(),
       ),
     ),
     h('div', { class: 'container' },
@@ -100,7 +112,7 @@ export async function homePage() {
       ),
       h('section', { class: 'block' },
         h('h2', { class: 'block-title' }, t('home.areas')),
-        h('ul', { class: 'chips' }, AREAS.map((a) => h('li', { class: 'chip' }, a))),
+        h('ul', { class: 'area-chips' }, AREAS.map((a) => h('li', { class: 'area-chip' }, a))),
       ),
       h('section', { class: 'provider-band' },
         h('div', {}, h('h2', {}, t('home.band.title')), h('p', {}, t('home.band.sub'))),
