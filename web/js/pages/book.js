@@ -56,6 +56,7 @@ export async function bookPage(ctx) {
     date: draft.date && draft.date >= mytDate(0) ? draft.date : mytDate(1),
     slot: draft.slot ?? null,
     notes: draft.notes ?? '',
+    guestArea: draft.guestArea ?? '', // before login: just the area, enough to show prices and free times
   };
   if (state.addressId && !addresses.some((a) => a.id === state.addressId)) state.addressId = null;
   if (!state.addressId && addresses.length === 1) state.addressId = addresses[0].id;
@@ -67,7 +68,13 @@ export async function bookPage(ctx) {
     return c === null || g.options.some((o) => o.code === c) ? c : defaultOf(g);
   };
   const selection = () => groups.flatMap((g) => (chosen(g) ? [{ group: g.key, code: chosen(g) }] : []));
-  const currentAddress = () => addresses.find((a) => a.id === state.addressId) ?? null;
+  const currentAddress = () => {
+    if (!isLoggedIn()) {
+      const area = areas.find((a) => a.slug === state.guestArea);
+      return area ? { id: 'guest', area } : null;
+    }
+    return addresses.find((a) => a.id === state.addressId) ?? null;
+  };
 
   let est = null;
   let estError = '';
@@ -168,7 +175,7 @@ export async function bookPage(ctx) {
   }
 
   function addressForm() {
-    const v = { label: '', line1: '', line2: '', postcode: '', areaSlug: '' };
+    const v = { label: '', line1: '', line2: '', postcode: '', areaSlug: state.guestArea || '' };
     const msg = h('div');
     const submit = h('button', { class: 'btn btn-primary', type: 'submit' }, t('book.address.save'));
     const input = (id, key, label, attrs = {}) =>
@@ -212,8 +219,17 @@ export async function bookPage(ctx) {
   function renderAddress() {
     if (!isLoggedIn()) {
       addressBox.replaceChildren(
-        h('p', { class: 'muted' }, t('book.address.login')),
-        h('button', { class: 'btn btn-primary', type: 'button', onclick: goLogin }, t('nav.login')),
+        h('p', { class: 'muted' }, t('book.address.guest')),
+        field('guest-area', t('book.address.guestArea'),
+          h('select', { id: 'guest-area', value: state.guestArea, onchange: (e) => {
+            state.guestArea = e.target.value;
+            state.slot = null;
+            persist();
+            loadSlots();
+          } },
+            h('option', { value: '' }, t('book.address.choose')),
+            areas.map((a) => h('option', { value: a.slug }, a.name)))),
+        h('button', { class: 'link', type: 'button', onclick: goLogin }, t('book.address.haveAccount')),
       );
       return;
     }
@@ -373,7 +389,7 @@ export async function bookPage(ctx) {
 
   function renderSummary() {
     const missing = [];
-    if (!isLoggedIn()) missing.push(t('sum.need.login'));
+    if (!isLoggedIn()) { if (!state.guestArea) missing.push(t('sum.need.address')); }
     else if (!state.addressId) missing.push(t('sum.need.address'));
     if (!state.slot) missing.push(t('sum.need.slot'));
 
@@ -401,7 +417,7 @@ export async function bookPage(ctx) {
     }
     kids.push(
       h('button', { class: 'btn btn-primary btn-block', type: 'button', disabled: bookingBusy || !est || missing.length > 0, onclick: submit },
-        bookingBusy ? t('sum.booking') : t('sum.book')),
+        bookingBusy ? t('sum.booking') : isLoggedIn() ? t('sum.book') : t('sum.loginBook')),
       missing.length ? h('p', { class: 'muted small' }, t('sum.need', { what: missing.join(', ') })) : null,
       h('p', { class: 'muted small' }, t('sum.payNote', { m: config.pendingExpiryMinutes })),
     );

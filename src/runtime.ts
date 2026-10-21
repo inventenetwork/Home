@@ -3,18 +3,30 @@ import { loadConfig, type Config } from './config.js';
 import { createDbFromConfig, type Db } from './db/index.js';
 import { migrate } from './db/migrate.js';
 import { activateAllServices } from './db/demo.js';
+import { createDevProvider } from './db/dev-provider.js';
 import { seed } from './db/seed.js';
 import { createMailer } from './mailer.js';
 import { createDbBackend, createDiskStore, createObjectStore, createS3Backend, type ImageStore } from './storage.js';
 
-/** Online demo only: an empty database gets the catalogue, areas and a super admin, with every service switched on. */
+/**
+ * Online demo only. An empty database gets the catalogue, areas and a super admin, with every service switched on. A demo
+ * with no approved provider shows "no free times" everywhere, so three demo providers (all services, all areas, 08:00-20:00) are added too.
+ */
 async function demoSeedIfEmpty(cfg: Config, db: Db): Promise<void> {
   if (cfg.DEMO_MODE !== 'true') return;
-  const n = (await db.query<{ n: string }>('SELECT count(*) AS n FROM services')).rows[0]?.n;
-  if (Number(n) > 0) return;
-  await seed(db, { adminEmail: cfg.ADMIN_EMAIL });
-  await activateAllServices(db);
-  console.log('Demo mode: empty database, loaded the catalogue and switched every service on.');
+  const services = Number((await db.query<{ n: string }>('SELECT count(*) AS n FROM services')).rows[0]?.n);
+  if (services === 0) {
+    await seed(db, { adminEmail: cfg.ADMIN_EMAIL });
+    await activateAllServices(db);
+    console.log('Demo mode: empty database, loaded the catalogue and switched every service on.');
+  }
+  const providers = Number((await db.query<{ n: string }>("SELECT count(*) AS n FROM providers WHERE vetting_status = 'approved'")).rows[0]?.n);
+  if (providers === 0) {
+    for (const [i, name] of ['Aisha Rahman', 'Lim Wei Jie', 'Nurul Huda'].entries()) {
+      await createDevProvider(db, { email: `demo.provider${i + 1}@example.com`, name });
+    }
+    console.log('Demo mode: no approved providers, added three demo providers.');
+  }
 }
 
 export function createStoreFromConfig(cfg: Config, db?: Db): ImageStore {
