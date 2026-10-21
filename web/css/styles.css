@@ -376,7 +376,7 @@ table.trend .total-row th, table.trend .total-row td { border-top: 2px solid var
 .landing-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 26px; }
 .serving { margin: 0 0 22px; }
 .live-dot { display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 0 4px rgb(74 222 128 / 25%); vertical-align: middle; }
-.serve-pill { display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px 6px 10px; border-radius: 999px; background: rgb(255 247 230 / 10%); border: 1px solid rgb(242 210 124 / 35%); color: #fff7e6; font-size: 0.9rem; }
+.serve-pill { display: inline-flex; align-items: center; gap: 6px; margin-right: 18px; color: #fff7e6; font-size: 0.95rem; }
 .serve-pill span:last-child { color: #c9b595; font-size: 0.8rem; }
 .serve-pin { display: inline-flex; color: var(--gold-light); }
 .serve-pin svg { width: 16px; height: 16px; }
@@ -409,7 +409,7 @@ table.trend .total-row th, table.trend .total-row td { border-top: 2px solid var
 .trust { list-style: none; margin: -34px 0 0; padding: 0; display: grid; gap: 10px; grid-template-columns: 1fr; position: relative; z-index: 2; }
 @media (min-width: 640px) { .trust { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 960px) { .trust { grid-template-columns: repeat(4, 1fr); } }
-.trust-item { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; box-shadow: 0 8px 24px rgb(58 34 22 / 12%); font-weight: 600; font-size: 0.93rem; }
+.trust-item { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; font-weight: 600; font-size: 0.93rem; }
 .trust-icon { display: inline-flex; flex: none; width: 40px; height: 40px; align-items: center; justify-content: center; background: var(--primary-soft); color: #8a5a14; border-radius: 10px; }
 .block { margin-top: 48px; }
 .block-title { font-size: 1.6rem; margin: 0 0 6px; letter-spacing: -0.01em; }
@@ -419,8 +419,9 @@ table.trend .total-row th, table.trend .total-row td { border-top: 2px solid var
 .how-step h3 { margin: 10px 0 6px; font-size: 1.05rem; }
 .how-step p { margin: 0; }
 .step-num { display: inline-flex; width: 36px; height: 36px; align-items: center; justify-content: center; border-radius: 50%; background: linear-gradient(135deg, #f2d27c, #d9a441); color: #2a1a0a; font-weight: 800; }
-.area-chips { list-style: none; padding: 0; margin: 14px 0 0; display: flex; flex-wrap: wrap; gap: 10px; }
-.area-chip { background: var(--primary-soft); color: #6b4310; border: 1px solid #ead7ad; border-radius: 999px; padding: 8px 16px; font-weight: 700; }
+.area-chips { list-style: none; padding: 0; margin: 14px 0 0; display: flex; flex-wrap: wrap; gap: 8px 22px; }
+.area-chip { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--text); }
+.area-chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); }
 .provider-band { margin-top: 52px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px; background: var(--grad); color: var(--cream); border-radius: 22px; padding: 30px; position: relative; overflow: hidden; }
 .provider-band::before { content: ""; position: absolute; width: 300px; height: 300px; right: -80px; top: -140px; border-radius: 50%; background: radial-gradient(circle, rgb(217 164 65 / 40%), rgb(217 164 65 / 0%) 70%); }
 .provider-band > * { position: relative; }
@@ -444,8 +445,6 @@ a.service-card:hover { box-shadow: 0 10px 26px rgb(58 34 22 / 18%); border-color
   .service-card[data-tone="2"] .service-icon, .trust-item:nth-child(3) .trust-icon { background: #2c3118; color: #c9d98a; }
   .service-card[data-tone="3"] .service-icon, .trust-item:nth-child(4) .trust-icon { background: #3c1f33; color: #e8a6cb; }
   .service-card[data-tone="4"] .service-icon { background: #33241a; color: #d8b99b; }
-  .area-chip { background: #3a2815; color: #f2cb7a; border-color: #4d3820; }
-  .trust-item { box-shadow: none; }
 }
 
 /* motion: lively but smooth; switched off for people who prefer reduced motion */
@@ -466,23 +465,10 @@ a.service-card:hover { transform: perspective(900px) translateY(-8px) rotateX(ca
 a.service-card:hover::after { opacity: 1; }
 .service-card .service-icon { transition: transform 0.5s var(--spring); }
 a.service-card:hover .service-icon { transform: scale(1.2) rotate(-8deg); }
-.trust-item { transition: transform 0.5s var(--spring), box-shadow 0.3s var(--ease); }
-.trust-item:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 18px 34px rgb(58 34 22 / 18%); }
-.trust-item .trust-icon { transition: transform 0.5s var(--spring); }
-.trust-item:hover .trust-icon { transform: scale(1.18) rotate(8deg); }
-.how-step { transition: transform 0.5s var(--spring), box-shadow 0.3s var(--ease); }
-.how-step:hover { transform: translateY(-7px); box-shadow: 0 16px 34px rgb(58 34 22 / 18%); }
-.how-step:hover .step-num { animation: pop 0.5s var(--spring); }
 @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.35); } 100% { transform: scale(1); } }
-.area-chip { transition: transform 0.45s var(--spring), background 0.2s; }
-.area-chip:hover { transform: translateY(-3px) scale(1.08); background: #f2dfb5; }
-.serve-pill { transition: transform 0.45s var(--spring), background 0.2s, border-color 0.2s; }
-.serve-pill:hover { transform: translateY(-3px) scale(1.06); background: rgb(242 210 124 / 20%); border-color: rgb(242 210 124 / 65%); }
 .quick-link { transition: background 0.2s, transform 0.45s var(--spring), border-color 0.2s; }
 .quick-link:hover { border-color: rgb(242 210 124 / 70%); transform: translateY(-3px) scale(1.05); }
 .quick-link:hover .service-icon { animation: pop 0.5s var(--spring); }
-.provider-band { transition: transform 0.5s var(--spring), box-shadow 0.3s; }
-.provider-band:hover { transform: scale(1.012); box-shadow: 0 24px 50px rgb(58 34 22 / 28%); }
 
 /* hero: follows the pointer, floating cards bob, gold text shimmers, sparks drift up */
 .landing-hero::before { transform: translate(calc(var(--mx, 0) * -90px), calc(var(--my, 0) * -70px)); transition: transform 0.9s var(--ease); }
@@ -529,3 +515,7 @@ a.service-card:hover .service-icon { transform: scale(1.2) rotate(-8deg); }
   .btn:hover:not(:disabled), a.service-card:hover { transform: none; }
   .landing-copy, .landing-art, .fcard-main, .fcard-vendor, .fcard-pay { transform: none; }
 }
+
+.quick-link::after { content: "\2192"; margin-left: 2px; color: var(--gold-light); transition: transform 0.3s var(--spring); }
+.quick-link:hover::after { transform: translateX(4px); }
+.service-card.disabled, .service-card.disabled.reveal.in { opacity: 0.6; box-shadow: none; }
