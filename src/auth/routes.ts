@@ -6,6 +6,7 @@ import type { Mailer } from '../mailer.js';
 import { LEGAL_VERSION } from '../legal.js';
 import type { Role } from '../types.js';
 import { GoogleAuthError, type GoogleVerifier } from './google.js';
+import { seedDemoPersonas } from '../db/demo-personas.js';
 import { DEMO_ACCOUNTS, demoAccount, demoPasswordMatches, ensureDemoUser } from './demo.js';
 import { requireAuth } from './middleware.js';
 import {
@@ -180,6 +181,7 @@ export function authRouter(cfg: Config, db: Db, mailer: Mailer, googleVerifier?:
           return res.status(401).json({ error: 'invalid_credentials' });
         }
         const user = await ensureDemoUser(db, acct);
+        if (acct.role !== 'admin') await seedDemoPersonas(db); // first time only: bookings, reviews and payouts to look at
         if (user.status !== 'active') return res.status(403).json({ error: 'account_unavailable' });
         const tokens = await issueTokens(user);
         res.json({

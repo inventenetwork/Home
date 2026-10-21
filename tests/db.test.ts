@@ -41,14 +41,14 @@ describe('schema and seed', () => {
   });
 
   it('is idempotent and keeps admin edits to price and active flag', async () => {
+    const count = async (table: string) => (await db.query<{ n: string }>(`SELECT count(*)::text AS n FROM ${table}`)).rows[0]!.n;
+    const before = { services: await count('services'), options: await count('service_options') };
     await db.query("UPDATE services SET base_price_cents = 9900, active = false WHERE slug = 'home-cleaning'");
     await seed(db);
     await seed(db);
 
-    const svc = await db.query<{ n: string }>('SELECT count(*)::text AS n FROM services');
-    expect(svc.rows[0]!.n).toBe('6');
-    const opts = await db.query<{ n: string }>('SELECT count(*)::text AS n FROM service_options');
-    expect(opts.rows[0]!.n).toBe('12');
+    expect(before.services).toBe('15');
+    expect({ services: await count('services'), options: await count('service_options') }).toEqual(before); // nothing doubled
 
     const cleaning = await db.query<{ base_price_cents: number; active: boolean }>(
       "SELECT base_price_cents, active FROM services WHERE slug = 'home-cleaning'",

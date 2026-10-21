@@ -60,8 +60,8 @@ export async function homePage() {
       ),
     ];
     return quote
-      ? h('div', { class: 'card service-card disabled' }, inner)
-      : h('a', { class: 'card service-card', href: `#/book/${s.slug}` }, inner);
+      ? h('div', { class: 'card service-card disabled', 'data-tone': String(i % 5) }, inner)
+      : h('a', { class: 'card service-card', href: `#/book/${s.slug}`, 'data-tone': String(i % 5) }, inner);
   });
 
   const toServices = () => document.getElementById('services')?.scrollIntoView({ behavior: 'smooth', block: 'start' });

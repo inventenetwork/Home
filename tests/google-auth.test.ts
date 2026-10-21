@@ -117,6 +117,7 @@ describe('GET /config', () => {
       minLeadHours: 24,
       freeCancelHours: 12,
       paymentGateway: 'fake',
+      demo: null,
       legal: { company: 'Home360 (company name to be added)', email: 'support@example.com', version: LEGAL_VERSION },
     });
   });

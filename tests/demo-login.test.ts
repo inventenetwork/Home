@@ -53,3 +53,21 @@ describe('DEMO_MODE username/password login', () => {
     expect(() => loadConfig({ ...base, DEMO_MODE: 'true', ALLOW_FAKE_PAYMENTS: 'true', DEMO_PASSWORD: 'short' })).toThrow(/DEMO_PASSWORD/);
   });
 });
+
+describe('demo history for the vendor and user logins', () => {
+  it('fills both accounts with bookings once, and the vendor sees offers, jobs and reviews', async () => {
+    const { app, db } = await setup({ DEMO_MODE: 'true' });
+    const v = await request(app).post('/auth/demo-login').send({ username: 'vendor', password: 'demo1234' }).expect(200);
+    const u = await request(app).post('/auth/demo-login').send({ username: 'user', password: 'demo1234' }).expect(200);
+    await request(app).post('/auth/demo-login').send({ username: 'user', password: 'demo1234' }).expect(200); // second login adds nothing
+    const count = await db.query("SELECT count(*)::int AS n FROM bookings WHERE customer_id = (SELECT id FROM users WHERE email = 'demo.user@example.com')");
+    expect(count.rows[0]!.n).toBe(9);
+    const statuses = (await db.query('SELECT DISTINCT status FROM bookings ORDER BY status')).rows.map((r: { status: string }) => r.status);
+    expect(statuses).toEqual(['cancelled', 'completed', 'confirmed', 'disputed', 'in_progress', 'offered', 'paid_out']);
+    const offers = await db.query("SELECT count(*)::int AS n FROM job_offers WHERE status = 'offered'");
+    expect(offers.rows[0]!.n).toBe(3);
+    const mine = await request(app).get('/bookings').set('Authorization', `Bearer ${u.body.accessToken}`).expect(200);
+    expect((mine.body.bookings ?? mine.body).length).toBeGreaterThanOrEqual(9);
+    void v;
+  });
+});
