@@ -41,6 +41,7 @@ const demoRegisterBody = z.object({
   fullName: z.string().trim().min(2).max(80),
   email: emailSchema,
   phone: z.string().trim().max(30).optional(),
+  role: z.enum(['customer', 'provider']).default('provider'),
   consent: z.boolean().default(false),
   locale: z.enum(['en', 'ms', 'zh']).default('en'),
 });
@@ -208,12 +209,12 @@ export function authRouter(cfg: Config, db: Db, mailer: Mailer, googleVerifier?:
       }
     });
 
-    // Vendor registration for the demo: creates a provider account (waiting for admin approval) and signs it in, with no emailed code.
+    // Registration for the demo: creates a customer account, or a vendor account waiting for admin approval, and signs it in, with no emailed code.
     router.post('/demo-register', async (req, res, next) => {
       try {
         const parsed = demoRegisterBody.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: 'invalid_request', message: 'Please fill in your name and a valid email.' });
-        const { fullName, email, phone, consent, locale } = parsed.data;
+        const { fullName, email, phone, role, consent, locale } = parsed.data;
         if (!consent) return res.status(400).json({ error: 'consent_required' });
         let phoneNorm: string | null = null;
         if (phone) {
@@ -226,12 +227,12 @@ export function authRouter(cfg: Config, db: Db, mailer: Mailer, googleVerifier?:
           const u = (
             await tx.query<UserRow>(
               `INSERT INTO users (email, role, full_name, phone, locale, consent_at, consent_version)
-               VALUES ($1, 'provider', $2, $3, $4, now(), $5)
+               VALUES ($1, $6, $2, $3, $4, now(), $5)
                RETURNING id, email, role, status, full_name, locale`,
-              [email, fullName, phoneNorm, locale, LEGAL_VERSION],
+              [email, fullName, phoneNorm, locale, LEGAL_VERSION, role],
             )
           ).rows[0]!;
-          await tx.query('INSERT INTO providers (user_id) VALUES ($1)', [u.id]);
+          if (role === 'provider') await tx.query('INSERT INTO providers (user_id) VALUES ($1)', [u.id]);
           return u;
         });
         const tokens = await issueTokens(user);

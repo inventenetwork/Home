@@ -8,6 +8,7 @@ import { privacyPage, termsPage } from './pages/legal.js';
 import { plansPage, providerReviewsPage } from './pages/extras.js';
 import { homePage } from './pages/home.js';
 import { joinPage } from './pages/join.js';
+import { signupPage } from './pages/signup.js';
 import { loginPage } from './pages/login.js';
 import { providerJobsPage, providerOffersPage } from './pages/provider.js';
 import { providerCalendarPage, providerEarningsPage, providerProfilePage } from './pages/provider-account.js';
@@ -25,6 +26,7 @@ const navigate = (hash) => {
 const routes = [
   [/^\/$/, homePage],
   [/^\/join$/, joinPage],
+  [/^\/signup$/, signupPage],
   [/^\/login$/, loginPage],
   [/^\/book\/([a-z0-9-]{1,60})$/, bookPage],
   [/^\/bookings$/, bookingsPage],
@@ -63,6 +65,7 @@ function renderTopbar() {
         user?.role === 'admin' ? h('a', { href: '#/admin' }, t('nav.admin')) : null,
         user ? h('a', { href: '#/account' }, t('nav.account')) : null,
         h('div', { class: 'langs', role: 'group', 'aria-label': t('nav.lang') }, langBtn('en', 'EN'), langBtn('ms', 'BM')),
+        isLoggedIn() ? null : h('a', { href: '#/signup' }, t('nav.signup')),
         isLoggedIn()
           ? h('button', { class: 'btn btn-ghost btn-sm', type: 'button', title: user?.email ?? '', onclick: () => { logout(); navigate('#/'); } }, t('nav.logout'))
           : h('a', { class: 'btn btn-primary btn-sm', href: `#/login?next=${encodeURIComponent(location.hash || '#/')}` }, t('nav.login')),

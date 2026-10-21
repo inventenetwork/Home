@@ -97,6 +97,16 @@ describe('vendor registration in demo mode', () => {
     void db;
   });
 
+  it('signs up a customer (no vendor profile) who can log in again with email + demo password', async () => {
+    const { app, db } = await setup({ DEMO_MODE: 'true' });
+    const r = await request(app).post('/auth/demo-register').send({ ...body, email: 'new.customer@example.com', role: 'customer' }).expect(201);
+    expect(r.body.user.role).toBe('customer');
+    const prov = await db.query("SELECT 1 FROM providers p JOIN users u ON u.id = p.user_id WHERE u.email = 'new.customer@example.com'");
+    expect(prov.rowCount).toBe(0);
+    await request(app).post('/auth/demo-register').send({ ...body, email: 'x@example.com', role: 'admin' }).expect(400); // admin can never be self-selected
+    await request(app).post('/auth/demo-login').send({ username: 'new.customer@example.com', password: 'demo1234' }).expect(200);
+  });
+
   it('does not exist outside demo mode', async () => {
     const { app } = await setup();
     await request(app).post('/auth/demo-register').send(body).expect(404);

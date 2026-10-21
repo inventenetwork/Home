@@ -390,8 +390,8 @@ table.trend .total-row th, table.trend .total-row td { border-top: 2px solid var
 .btn-lg { padding: 14px 24px; font-size: 1.02rem; border-radius: 999px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; min-height: 48px; }
 .btn-accent { background: linear-gradient(135deg, #f2d27c, #d9a441); color: #2a1a0a; border: 0; box-shadow: 0 6px 18px rgb(217 164 65 / 35%); }
 .btn-accent:hover { filter: brightness(1.06); }
-.btn-ghost { background: transparent; color: #fff7e6; border: 2px solid rgb(242 210 124 / 55%); }
-.btn-ghost:hover { background: rgb(242 210 124 / 14%); }
+.landing-hero .btn-ghost { background: transparent; color: #fff7e6; border: 2px solid rgb(242 210 124 / 55%); }
+.landing-hero .btn-ghost:hover { background: rgb(242 210 124 / 14%); }
 .landing-art { display: none; flex: none; position: relative; width: 380px; height: 400px; margin-right: 10px; }
 @media (min-width: 940px) { .landing-art { display: block; } }
 .fcard { position: absolute; background: #fffaf0; color: #2a1a12; border-radius: 18px; box-shadow: 0 18px 40px rgb(0 0 0 / 35%); padding: 16px 18px; }
