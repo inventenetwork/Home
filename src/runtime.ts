@@ -2,8 +2,20 @@ import { createApp } from './app.js';
 import { loadConfig, type Config } from './config.js';
 import { createDbFromConfig, type Db } from './db/index.js';
 import { migrate } from './db/migrate.js';
+import { activateAllServices } from './db/demo.js';
+import { seed } from './db/seed.js';
 import { createMailer } from './mailer.js';
 import { createDbBackend, createDiskStore, createObjectStore, createS3Backend, type ImageStore } from './storage.js';
+
+/** Online demo only: an empty database gets the catalogue, areas and a super admin, with every service switched on. */
+async function demoSeedIfEmpty(cfg: Config, db: Db): Promise<void> {
+  if (cfg.DEMO_MODE !== 'true') return;
+  const n = (await db.query<{ n: string }>('SELECT count(*) AS n FROM services')).rows[0]?.n;
+  if (Number(n) > 0) return;
+  await seed(db, { adminEmail: cfg.ADMIN_EMAIL });
+  await activateAllServices(db);
+  console.log('Demo mode: empty database, loaded the catalogue and switched every service on.');
+}
 
 export function createStoreFromConfig(cfg: Config, db?: Db): ImageStore {
   if (cfg.STORAGE === 'db') {
@@ -29,9 +41,12 @@ export async function createRuntime(env: Record<string, string | undefined> = pr
   const applied = cfg.DATABASE_URL
     ? await db.tx(async (t) => {
         await t.query('SELECT pg_advisory_xact_lock(360360)');
-        return migrate(t);
+        const done = await migrate(t);
+        await demoSeedIfEmpty(cfg, t);
+        return done;
       })
     : await migrate(db);
+  if (!cfg.DATABASE_URL) await demoSeedIfEmpty(cfg, db);
   if (applied.length) console.log(`Applied migrations: ${applied.join(', ')}`);
   const app = createApp({ cfg, db, mailer: createMailer(cfg), store: createStoreFromConfig(cfg, db) });
   return { cfg, db, app };

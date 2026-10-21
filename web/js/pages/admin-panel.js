@@ -24,7 +24,7 @@ export async function overviewTab(ctx) {
   const max = Math.max(1, ...o.daily.map((d) => d.bookings));
   const bars = h('div', { class: 'bars', role: 'img', 'aria-label': `Bookings per day, last ${days} days. Busiest day: ${max}.` },
     o.daily.map((d) => {
-      const bar = h('div', { class: 'bar', title: `${d.date}: ${d.bookings} booking(s), ${money(d.valueCents)}` });
+      const bar = h('div', { class: 'chart-bar', title: `${d.date}: ${d.bookings} booking(s), ${money(d.valueCents)}` });
       bar.style.height = `${Math.max(d.bookings ? 6 : 1, Math.round((d.bookings / max) * 100))}%`;
       return bar;
     }));
