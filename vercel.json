@@ -1,7 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run build && node -e \"const fs=require('fs');fs.mkdirSync('public',{recursive:true});fs.writeFileSync('public/_placeholder.txt','')\"",
+  "outputDirectory": "public",
   "regions": ["sin1"],
   "functions": {
     "api/index.js": {
