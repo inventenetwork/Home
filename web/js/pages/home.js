@@ -10,7 +10,8 @@ const TRUST = [
   ['wallet', ICON('<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 14.5h2"/>'), 'home.trust.pay'],
 ];
 const STEPS = ['home.step1', 'home.step2', 'home.step3'];
-const AREAS = ['Kuching', 'Sibu', 'Petaling Jaya', 'Subang', 'Kepong'];
+const PIN = ICON('<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0113 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/>');
+const FALLBACK_AREAS = [{ name: 'Kuching', state: 'Sarawak' }, { name: 'Sibu', state: 'Sarawak' }, { name: 'Petaling Jaya', state: 'Selangor' }, { name: 'Subang', state: 'Selangor' }, { name: 'Kepong', state: 'Kuala Lumpur' }];
 
 const LOCK = ICON('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>');
 
@@ -44,7 +45,10 @@ async function fromPrice(slug) {
 }
 
 export async function homePage() {
-  const { services } = await api('GET', '/services', { auth: false });
+  const [{ services }, areas] = await Promise.all([
+    api('GET', '/services', { auth: false }),
+    api('GET', '/areas', { auth: false }).then((r) => (r.areas?.length ? r.areas : FALLBACK_AREAS)).catch(() => FALLBACK_AREAS),
+  ]);
   const prices = await Promise.all(services.map((s) => (s.pricingModel === 'quote' ? null : fromPrice(s.slug))));
 
   const cards = services.map((s, i) => {
@@ -84,6 +88,11 @@ export async function homePage() {
             h('button', { class: 'btn btn-accent btn-lg', type: 'button', onclick: toServices }, t('home.cta')),
             h('a', { class: 'btn btn-ghost btn-lg', href: '#/login?as=provider', 'data-join-provider': true }, t('home.cta.provider')),
           ),
+          h('div', { class: 'serving' },
+            h('p', { class: 'quick-label' }, h('span', { class: 'live-dot' }), t('home.serving')),
+            h('ul', { class: 'quick-list' }, areas.map((a) =>
+              h('li', { class: 'serve-pill' }, svg(PIN, 'serve-pin'), h('strong', {}, a.name), a.state ? h('span', {}, a.state) : null))),
+          ),
           quick.length
             ? h('div', { class: 'quick' },
                 h('p', { class: 'quick-label' }, t('home.popular')),
@@ -112,7 +121,7 @@ export async function homePage() {
       ),
       h('section', { class: 'block' },
         h('h2', { class: 'block-title' }, t('home.areas')),
-        h('ul', { class: 'area-chips' }, AREAS.map((a) => h('li', { class: 'area-chip' }, a))),
+        h('ul', { class: 'area-chips' }, areas.map((a) => h('li', { class: 'area-chip' }, a.name))),
       ),
       h('section', { class: 'provider-band' },
         h('div', {}, h('h2', {}, t('home.band.title')), h('p', {}, t('home.band.sub'))),

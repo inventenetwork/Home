@@ -373,7 +373,13 @@ table.trend .total-row th, table.trend .total-row td { border-top: 2px solid var
 .landing-hero h1 { font-size: clamp(2.3rem, 7vw, 3.8rem); line-height: 1.05; margin: 0 0 18px; letter-spacing: -0.03em; color: #fff7e6; }
 .gold-text { background: linear-gradient(90deg, #f6d77a, #d9a441 60%, #f2d27c); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .landing-sub { font-size: 1.15rem; color: #e6d6bc; margin-bottom: 26px; max-width: 500px; }
-.landing-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 30px; }
+.landing-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 26px; }
+.serving { margin: 0 0 22px; }
+.live-dot { display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 0 4px rgb(74 222 128 / 25%); vertical-align: middle; }
+.serve-pill { display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px 6px 10px; border-radius: 999px; background: rgb(255 247 230 / 10%); border: 1px solid rgb(242 210 124 / 35%); color: #fff7e6; font-size: 0.9rem; }
+.serve-pill span:last-child { color: #c9b595; font-size: 0.8rem; }
+.serve-pin { display: inline-flex; color: var(--gold-light); }
+.serve-pin svg { width: 16px; height: 16px; }
 .quick { margin: 0; }
 .quick-label { margin: 0 0 10px; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; color: #c9b595; font-weight: 700; }
 .quick-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
