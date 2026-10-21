@@ -92,6 +92,7 @@ export function loginPage(ctx) {
               h('strong', {}, a.username), h('span', { class: 'muted' }, ` — ${a.label}`))),
         ),
         h('p', { class: 'muted small' }, t('login.demo.pw', { pw: config.demo.password })),
+        h('p', { class: 'muted small' }, t('login.demo.newVendor'), ' ', h('a', { href: '#/join' }, t('login.demo.register'))),
       ),
     );
   }

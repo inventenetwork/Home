@@ -129,7 +129,7 @@ a.service-card:hover { transform: translateY(-2px); border-color: var(--primary)
 .field { margin-bottom: 14px; }
 label { font-weight: 600; font-size: 0.92rem; }
 .field label { display: block; margin-bottom: 4px; }
-input[type="text"], input[type="email"], input[type="number"], input[type="date"], input:not([type]), select, textarea {
+input[type="text"], input[type="email"], input[type="number"], input[type="date"], input[type="tel"], input[type="password"], input:not([type]), select, textarea {
   width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); font: inherit; min-height: 44px;
 }
 textarea { resize: vertical; }
@@ -519,3 +519,19 @@ a.service-card:hover .service-icon { transform: scale(1.2) rotate(-8deg); }
 .quick-link::after { content: "\2192"; margin-left: 2px; color: var(--gold-light); transition: transform 0.3s var(--spring); }
 .quick-link:hover::after { transform: translateX(4px); }
 .service-card.disabled, .service-card.disabled.reveal.in { opacity: 0.6; box-shadow: none; }
+
+/* vendor registration page */
+.join-hero { margin: 28px 0 8px; padding: 36px 30px; border-radius: 22px; background: var(--grad); color: var(--cream); position: relative; overflow: hidden; }
+.join-hero::before { content: ""; position: absolute; width: 380px; height: 380px; right: -100px; top: -170px; border-radius: 50%; background: radial-gradient(circle, rgb(217 164 65 / 38%), rgb(217 164 65 / 0%) 70%); }
+.join-hero > * { position: relative; }
+.join-hero h1 { font-size: clamp(2rem, 6vw, 3rem); line-height: 1.08; margin: 0 0 12px; letter-spacing: -0.02em; color: #fff7e6; }
+.join-hero .landing-sub { margin-bottom: 0; }
+.join-layout { display: grid; gap: 24px; grid-template-columns: 1fr; margin-top: 22px; align-items: start; }
+@media (min-width: 900px) { .join-layout { grid-template-columns: 1.15fr 1fr; } .join-form { position: sticky; top: 84px; } }
+.perks { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 12px; }
+.perk { display: flex; gap: 14px; align-items: flex-start; }
+.perk p { margin: 2px 0 0; }
+.join-steps { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 14px; }
+.join-steps li { display: flex; gap: 14px; align-items: flex-start; }
+.join-steps p { margin: 2px 0 0; }
+.join-form h2 { margin-bottom: 6px; }

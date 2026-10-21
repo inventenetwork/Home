@@ -71,3 +71,34 @@ describe('demo history for the vendor and user logins', () => {
     void v;
   });
 });
+
+describe('vendor registration in demo mode', () => {
+  const body = { fullName: 'Test Vendor', email: 'new.vendor@example.com', phone: '012-345 6789', consent: true };
+
+  it('creates a pending vendor, signs them in, and they can log in again with email + demo password', async () => {
+    const { app, db } = await setup({ DEMO_MODE: 'true' });
+    const r = await request(app).post('/auth/demo-register').send(body).expect(201);
+    expect(r.body.user).toMatchObject({ role: 'provider', email: 'new.vendor@example.com', fullName: 'Test Vendor' });
+    const row = await db.query("SELECT u.phone, p.vetting_status FROM users u JOIN providers p ON p.user_id = u.id WHERE u.email = 'new.vendor@example.com'");
+    expect(row.rows[0]).toMatchObject({ phone: '+60123456789', vetting_status: 'pending' });
+    const again = await request(app).post('/auth/demo-login').send({ username: 'New.Vendor@example.com', password: 'demo1234' }).expect(200);
+    expect(again.body.user.role).toBe('provider');
+  });
+
+  it('needs consent and a valid phone, refuses a taken email, and never logs in an admin by email', async () => {
+    const { app, db } = await setup({ DEMO_MODE: 'true' });
+    await request(app).post('/auth/demo-register').send({ ...body, consent: false }).expect(400);
+    await request(app).post('/auth/demo-register').send({ ...body, phone: '12345' }).expect(400);
+    await request(app).post('/auth/demo-register').send(body).expect(201);
+    await request(app).post('/auth/demo-register').send(body).expect(409);
+    await request(app).post('/auth/demo-login').send({ username: 'admin', password: 'demo1234' }).expect(200); // creates demo.admin@example.com
+    await request(app).post('/auth/demo-login').send({ username: 'demo.admin@example.com', password: 'demo1234' }).expect(401);
+    await request(app).post('/auth/demo-login').send({ username: 'new.vendor@example.com', password: 'wrong-pass' }).expect(401);
+    void db;
+  });
+
+  it('does not exist outside demo mode', async () => {
+    const { app } = await setup();
+    await request(app).post('/auth/demo-register').send(body).expect(404);
+  });
+});

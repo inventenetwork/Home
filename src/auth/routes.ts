@@ -6,6 +6,7 @@ import type { Mailer } from '../mailer.js';
 import { LEGAL_VERSION } from '../legal.js';
 import type { Role } from '../types.js';
 import { GoogleAuthError, type GoogleVerifier } from './google.js';
+import { normalizeMyPhone } from '../privacy/routes.js';
 import { seedDemoPersonas } from '../db/demo-personas.js';
 import { DEMO_ACCOUNTS, demoAccount, demoPasswordMatches, ensureDemoUser } from './demo.js';
 import { requireAuth } from './middleware.js';
@@ -36,6 +37,13 @@ const googleBody = z.object({
   locale: z.enum(['en', 'ms', 'zh']).default('en'),
 });
 const demoBody = z.object({ username: z.string().trim().max(40), password: z.string().max(100) });
+const demoRegisterBody = z.object({
+  fullName: z.string().trim().min(2).max(80),
+  email: emailSchema,
+  phone: z.string().trim().max(30).optional(),
+  consent: z.boolean().default(false),
+  locale: z.enum(['en', 'ms', 'zh']).default('en'),
+});
 const refreshBody = z.object({ refreshToken: z.string().min(20).max(200) });
 
 interface UserRow {
@@ -175,19 +183,62 @@ export function authRouter(cfg: Config, db: Db, mailer: Mailer, googleVerifier?:
       try {
         const parsed = demoBody.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: 'invalid_request' });
-        const acct = demoAccount(parsed.data.username);
         // Same answer for a wrong username and a wrong password.
-        if (!acct || !demoPasswordMatches(cfg.DEMO_PASSWORD, parsed.data.password)) {
-          return res.status(401).json({ error: 'invalid_credentials' });
+        if (!demoPasswordMatches(cfg.DEMO_PASSWORD, parsed.data.password)) return res.status(401).json({ error: 'invalid_credentials' });
+
+        const who = parsed.data.username.trim().toLowerCase();
+        let user: UserRow | undefined;
+        const acct = demoAccount(who);
+        if (acct) user = await ensureDemoUser(db, acct);
+        else if (who.includes('@')) {
+          // a vendor or user who registered on this demo signs in with their email and the shared demo password (never an admin)
+          user = (await db.query<UserRow>("SELECT id, email, role, status, full_name, locale FROM users WHERE email = $1 AND role <> 'admin'", [who])).rows[0];
         }
-        const user = await ensureDemoUser(db, acct);
-        if (acct.role !== 'admin') await seedDemoPersonas(db); // first time only: bookings, reviews and payouts to look at
+        if (!user) return res.status(401).json({ error: 'invalid_credentials' });
+        if (acct && acct.role !== 'admin') await seedDemoPersonas(db); // first time only: bookings, reviews and payouts to look at
         if (user.status !== 'active') return res.status(403).json({ error: 'account_unavailable' });
         const tokens = await issueTokens(user);
         res.json({
           ...tokens,
           user: { id: user.id, email: user.email, role: user.role, fullName: user.full_name, locale: user.locale },
           isNewUser: false,
+        });
+      } catch (err) {
+        next(err);
+      }
+    });
+
+    // Vendor registration for the demo: creates a provider account (waiting for admin approval) and signs it in, with no emailed code.
+    router.post('/demo-register', async (req, res, next) => {
+      try {
+        const parsed = demoRegisterBody.safeParse(req.body);
+        if (!parsed.success) return res.status(400).json({ error: 'invalid_request', message: 'Please fill in your name and a valid email.' });
+        const { fullName, email, phone, consent, locale } = parsed.data;
+        if (!consent) return res.status(400).json({ error: 'consent_required' });
+        let phoneNorm: string | null = null;
+        if (phone) {
+          phoneNorm = normalizeMyPhone(phone);
+          if (!phoneNorm) return res.status(400).json({ error: 'invalid_phone', message: 'Enter a Malaysian mobile number, for example 012-345 6789.' });
+        }
+        const taken = await db.query('SELECT 1 FROM users WHERE email = $1', [email]);
+        if ((taken.rowCount ?? 0) > 0) return res.status(409).json({ error: 'email_taken', message: 'That email is already registered. Log in instead.' });
+        const user = await db.tx(async (tx) => {
+          const u = (
+            await tx.query<UserRow>(
+              `INSERT INTO users (email, role, full_name, phone, locale, consent_at, consent_version)
+               VALUES ($1, 'provider', $2, $3, $4, now(), $5)
+               RETURNING id, email, role, status, full_name, locale`,
+              [email, fullName, phoneNorm, locale, LEGAL_VERSION],
+            )
+          ).rows[0]!;
+          await tx.query('INSERT INTO providers (user_id) VALUES ($1)', [u.id]);
+          return u;
+        });
+        const tokens = await issueTokens(user);
+        res.status(201).json({
+          ...tokens,
+          user: { id: user.id, email: user.email, role: user.role, fullName: user.full_name, locale: user.locale },
+          isNewUser: true,
         });
       } catch (err) {
         next(err);

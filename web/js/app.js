@@ -7,6 +7,7 @@ import { accountPage } from './pages/account.js';
 import { privacyPage, termsPage } from './pages/legal.js';
 import { plansPage, providerReviewsPage } from './pages/extras.js';
 import { homePage } from './pages/home.js';
+import { joinPage } from './pages/join.js';
 import { loginPage } from './pages/login.js';
 import { providerJobsPage, providerOffersPage } from './pages/provider.js';
 import { providerCalendarPage, providerEarningsPage, providerProfilePage } from './pages/provider-account.js';
@@ -23,6 +24,7 @@ const navigate = (hash) => {
 
 const routes = [
   [/^\/$/, homePage],
+  [/^\/join$/, joinPage],
   [/^\/login$/, loginPage],
   [/^\/book\/([a-z0-9-]{1,60})$/, bookPage],
   [/^\/bookings$/, bookingsPage],

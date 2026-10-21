@@ -162,7 +162,7 @@ export async function homePage(ctx) {
           h('p', { class: 'landing-sub' }, t('home.sub')),
           h('div', { class: 'landing-cta' },
             h('button', { class: 'btn btn-accent btn-lg', type: 'button', onclick: toServices }, t('home.cta')),
-            h('a', { class: 'btn btn-ghost btn-lg', href: '#/login?as=provider', 'data-join-provider': true }, t('home.cta.provider')),
+            h('a', { class: 'btn btn-ghost btn-lg', href: '#/join', 'data-join-provider': true }, t('home.cta.provider')),
           ),
           h('div', { class: 'serving' },
             h('p', { class: 'quick-label' }, h('span', { class: 'live-dot' }), t('home.serving')),
@@ -201,7 +201,7 @@ export async function homePage(ctx) {
       ),
       h('section', { class: 'provider-band' },
         h('div', {}, h('h2', {}, t('home.band.title')), h('p', {}, t('home.band.sub'))),
-        h('a', { class: 'btn btn-accent btn-lg', href: '#/login?as=provider', 'data-join-provider': true }, t('home.band.cta')),
+        h('a', { class: 'btn btn-accent btn-lg', href: '#/join', 'data-join-provider': true }, t('home.band.cta')),
       ),
     ),
   );
