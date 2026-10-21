@@ -1,7 +1,7 @@
 import { getLang, hasKey, t } from './i18n.js';
 
 /** Public settings from GET /config; filled in by app.js. */
-export const config = { googleClientId: null, pendingExpiryMinutes: 30, maxAdvanceDays: 60, minLeadHours: 24, freeCancelHours: 12, paymentGateway: null, legal: null };
+export const config = { googleClientId: null, pendingExpiryMinutes: 30, maxAdvanceDays: 60, minLeadHours: 24, freeCancelHours: 12, paymentGateway: null, legal: null, demo: null };
 
 const PROP_KEYS = new Set(['value', 'checked', 'disabled', 'selected', 'indeterminate']);
 

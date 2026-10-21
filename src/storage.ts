@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import type { Db } from './db/index.js';
 
 /** Private file storage for photos and ID documents. Files are never served directly: only through checked routes. */
 
@@ -101,6 +102,22 @@ export function createObjectStore(backend: ObjectBackend): ImageStore {
     },
     async remove(key) {
       if (KEY.test(key)) await backend.del(key).catch(() => {});
+    },
+  };
+}
+
+/** Keeps files in the database (table stored_files). For a small online demo with no bucket; use disk or S3 for real use. */
+export function createDbBackend(db: Db): ObjectBackend {
+  return {
+    async put(key, data) {
+      await db.query('INSERT INTO stored_files (key, data) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET data = EXCLUDED.data', [key, data]);
+    },
+    async get(key) {
+      const r = await db.query<{ data: Uint8Array }>('SELECT data FROM stored_files WHERE key = $1', [key]);
+      return r.rows[0] ? Buffer.from(r.rows[0].data) : null;
+    },
+    async del(key) {
+      await db.query('DELETE FROM stored_files WHERE key = $1', [key]);
     },
   };
 }

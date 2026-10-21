@@ -14,7 +14,7 @@ describe('schema and seed', () => {
 
   it('applies migrations once and is a no-op the second time', async () => {
     const first = await migrate(db);
-    expect(first).toEqual(['001_init.sql', '002_booking.sql', '003_identities.sql', '004_payments.sql', '005_providers.sql', '006_customer_extras.sql', '007_privacy.sql']);
+    expect(first).toEqual(['001_init.sql', '002_booking.sql', '003_identities.sql', '004_payments.sql', '005_providers.sql', '006_customer_extras.sql', '007_privacy.sql', '008_stored_files.sql']);
     expect(await migrate(db)).toEqual([]);
   });
 

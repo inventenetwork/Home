@@ -48,6 +48,54 @@ export function loginPage(ctx) {
   ctx.onCleanup(() => { googleHandler = null; });
 
   const errorBox = h('div', { class: 'slot-error' });
+
+  // DEMO_MODE: username + password for the three demo accounts. No email code, no sign-up.
+  function demoLoginPage() {
+    let username = '';
+    let password = '';
+    const userInput = h('input', { id: 'username', autocomplete: 'username', required: true, maxlength: 40, oninput: (e) => (username = e.target.value) });
+    const passInput = h('input', { id: 'password', type: 'password', autocomplete: 'current-password', required: true, maxlength: 100, oninput: (e) => (password = e.target.value) });
+    const submit = h('button', { class: 'btn btn-primary btn-block', type: 'submit' }, t('login.demo.submit'));
+    async function go(e) {
+      e.preventDefault();
+      if (submit.disabled) return;
+      submit.disabled = true;
+      setError('');
+      try {
+        finish(await api('POST', '/auth/demo-login', { auth: false, body: { username, password } }));
+        return;
+      } catch (err) {
+        setError(err.code === 'invalid_credentials' ? t('login.demo.bad') : errText(err));
+      }
+      submit.disabled = false;
+    }
+    const pick = (u) => {
+      username = u;
+      password = config.demo.password;
+      userInput.value = username;
+      passInput.value = password;
+    };
+    return h('div', { class: 'container narrow' },
+      h('div', { class: 'card login-card' },
+        h('h1', {}, t('login.demo.title')),
+        h('p', { class: 'muted' }, t('login.demo.sub')),
+        errorBox,
+        h('form', { onsubmit: go },
+          field('username', t('login.demo.username'), userInput),
+          field('password', t('login.demo.password'), passInput),
+          submit,
+        ),
+        h('div', { class: 'divider' }, h('span', {}, t('login.demo.quick'))),
+        h('div', { class: 'demo-accounts' },
+          ...config.demo.accounts.map((a) =>
+            h('button', { class: 'btn btn-block demo-account', type: 'button', onclick: () => pick(a.username) },
+              h('strong', {}, a.username), h('span', { class: 'muted' }, ` — ${a.label}`))),
+        ),
+        h('p', { class: 'muted small' }, t('login.demo.pw', { pw: config.demo.password })),
+      ),
+    );
+  }
+
   const formArea = h('div');
   const googleBlock = h('div', { class: 'google-block', hidden: true });
   const googleBtn = h('div', { class: 'google-btn' });
@@ -208,6 +256,8 @@ export function loginPage(ctx) {
       /* Google is unreachable (offline or blocked): email codes still work */
     }
   }
+
+  if (config.demo) return demoLoginPage();
 
   draw();
   setupGoogle();

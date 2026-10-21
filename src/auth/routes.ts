@@ -6,6 +6,7 @@ import type { Mailer } from '../mailer.js';
 import { LEGAL_VERSION } from '../legal.js';
 import type { Role } from '../types.js';
 import { GoogleAuthError, type GoogleVerifier } from './google.js';
+import { DEMO_ACCOUNTS, demoAccount, demoPasswordMatches, ensureDemoUser } from './demo.js';
 import { requireAuth } from './middleware.js';
 import {
   generateOtp,
@@ -33,6 +34,7 @@ const googleBody = z.object({
   consent: z.boolean().default(false),
   locale: z.enum(['en', 'ms', 'zh']).default('en'),
 });
+const demoBody = z.object({ username: z.string().trim().max(40), password: z.string().max(100) });
 const refreshBody = z.object({ refreshToken: z.string().min(20).max(200) });
 
 interface UserRow {
@@ -165,6 +167,31 @@ export function authRouter(cfg: Config, db: Db, mailer: Mailer, googleVerifier?:
       next(err);
     }
   });
+
+  // 2a) DEMO_MODE only: username + password for the three fixed demo accounts. The route does not exist otherwise.
+  if (cfg.DEMO_MODE === 'true') {
+    router.post('/demo-login', async (req, res, next) => {
+      try {
+        const parsed = demoBody.safeParse(req.body);
+        if (!parsed.success) return res.status(400).json({ error: 'invalid_request' });
+        const acct = demoAccount(parsed.data.username);
+        // Same answer for a wrong username and a wrong password.
+        if (!acct || !demoPasswordMatches(cfg.DEMO_PASSWORD, parsed.data.password)) {
+          return res.status(401).json({ error: 'invalid_credentials' });
+        }
+        const user = await ensureDemoUser(db, acct);
+        if (user.status !== 'active') return res.status(403).json({ error: 'account_unavailable' });
+        const tokens = await issueTokens(user);
+        res.json({
+          ...tokens,
+          user: { id: user.id, email: user.email, role: user.role, fullName: user.full_name, locale: user.locale },
+          isNewUser: false,
+        });
+      } catch (err) {
+        next(err);
+      }
+    });
+  }
 
   // 2b) Sign in with Google. The browser sends the ID token Google gave it; we verify it ourselves and issue our own tokens.
   router.post('/google', async (req, res, next) => {

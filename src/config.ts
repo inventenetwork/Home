@@ -29,9 +29,9 @@ const schema = z.object({
   DATA_KEY: z.preprocess((v) => (v === '' ? undefined : v), z.string().min(32, 'DATA_KEY must be at least 32 characters').optional()),
   // Where uploaded photos and ID documents are stored (private; never served as static files).
   UPLOAD_DIR: z.string().default('./data/uploads'),
-  // Where photos and ID documents live: 'disk' (UPLOAD_DIR, for your own computer or a server with a permanent disk) or 's3'
+  // Where photos and ID documents live: 'db' (inside the database; demo only), 'disk' (UPLOAD_DIR, for your own computer or a server with a permanent disk) or 's3'
   // (any S3-compatible private bucket: AWS S3, Cloudflare R2, ...). Hosts without a permanent disk, like Vercel, must use 's3'.
-  STORAGE: z.enum(['disk', 's3']).default('disk'),
+  STORAGE: z.enum(['disk', 's3', 'db']).default('disk'),
   S3_BUCKET: optionalText,
   S3_REGION: z.string().default('ap-southeast-1'),
   S3_ENDPOINT: optionalText, // only for non-AWS services such as Cloudflare R2
@@ -42,6 +42,9 @@ const schema = z.object({
   CRON_SECRET: z.preprocess((v) => (v === '' ? undefined : v), z.string().min(16, 'CRON_SECRET must be at least 16 characters').optional()),
   // Production normally refuses the pretend payment gateway. Set to 'true' ONLY for a labelled online demo with no real money.
   ALLOW_FAKE_PAYMENTS: z.enum(['true', 'false']).default('false'),
+  // Online demo only: log in with a username and password (admin / vendor / user) instead of an emailed code. Needs no SMTP.
+  DEMO_MODE: z.enum(['true', 'false']).default('false'),
+  DEMO_PASSWORD: z.preprocess((v) => (v === '' ? undefined : v), z.string().min(8, 'DEMO_PASSWORD must be at least 8 characters').default('demo1234')),
   // Maximum database connections per running instance. Keep it small on serverless hosts (they start many instances).
   DB_POOL_MAX: z.coerce.number().int().min(1).max(50).default(5),
   // Set automatically by Vercel.
@@ -71,7 +74,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
   if (cfg.NODE_ENV === 'production' && !cfg.DATABASE_URL) {
     throw new Error('DATABASE_URL is required in production');
   }
-  if (cfg.NODE_ENV === 'production' && !cfg.SMTP_HOST) {
+  if (cfg.NODE_ENV === 'production' && !cfg.SMTP_HOST && cfg.DEMO_MODE !== 'true') {
     throw new Error('SMTP_HOST is required in production (OTP emails must actually be sent)');
   }
   if (cfg.NODE_ENV === 'production' && cfg.DEV_LOG_OTP === 'true') {
@@ -83,11 +86,17 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
   if (cfg.NODE_ENV === 'production' && cfg.PAYMENT_GATEWAY === 'fake' && cfg.ALLOW_FAKE_PAYMENTS !== 'true') {
     throw new Error('PAYMENT_GATEWAY=fake is for development only. Production needs a real payment gateway (not built yet). For a labelled online demo with no real money, set ALLOW_FAKE_PAYMENTS=true.');
   }
+  if (cfg.NODE_ENV === 'production' && cfg.DEMO_MODE === 'true' && cfg.ALLOW_FAKE_PAYMENTS !== 'true') {
+    throw new Error('DEMO_MODE=true (shared demo logins) is only for a labelled demo: also set ALLOW_FAKE_PAYMENTS=true, and never use it with real customers.');
+  }
   if (cfg.STORAGE === 's3' && (!cfg.S3_BUCKET || !cfg.S3_ACCESS_KEY_ID || !cfg.S3_SECRET_ACCESS_KEY)) {
     throw new Error('STORAGE=s3 needs S3_BUCKET, S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY');
   }
-  if (cfg.VERCEL && cfg.STORAGE !== 's3') {
-    throw new Error('On Vercel there is no permanent disk: set STORAGE=s3 (and the S3_* settings) so photos and ID documents are kept.');
+  if (cfg.VERCEL && cfg.STORAGE === 'disk') {
+    throw new Error('On Vercel there is no permanent disk: set STORAGE=s3 (and the S3_* settings), or STORAGE=db for a small demo, so photos and ID documents are kept.');
+  }
+  if (cfg.STORAGE === 'db' && cfg.NODE_ENV === 'production' && cfg.DEMO_MODE !== 'true') {
+    throw new Error('STORAGE=db keeps photos and ID documents in the database and is for the DEMO_MODE demo only. Use STORAGE=s3 for real use.');
   }
   return {
     ...cfg,

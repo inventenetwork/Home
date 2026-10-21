@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { loadConfig } from '../src/config.js';
-import { createObjectStore, type ObjectBackend } from '../src/storage.js';
+import { createObjectStore, createDbBackend, type ObjectBackend } from '../src/storage.js';
 import { login, makeAddress, makeClock, makeProvider, setup } from './helpers.js';
 
 const base = { JWT_SECRET: 'x'.repeat(40), OTP_SECRET: 'y'.repeat(40) };
@@ -25,11 +25,30 @@ describe('hosting configuration', () => {
   it('Vercel has no permanent disk, so it must use s3', () => {
     expect(() => loadConfig({ ...base, VERCEL: '1' })).toThrow(/STORAGE=s3/);
     expect(loadConfig({ ...base, ...s3, VERCEL: '1' }).STORAGE).toBe('s3');
+    expect(loadConfig({ ...base, STORAGE: 'db', VERCEL: '1' }).STORAGE).toBe('db');
   });
   it('CRON_SECRET must be long enough, and empty means off', () => {
     expect(() => loadConfig({ ...base, CRON_SECRET: 'short' })).toThrow(/CRON_SECRET/);
     expect(loadConfig({ ...base, CRON_SECRET: '' }).CRON_SECRET).toBeUndefined();
     expect(loadConfig({ ...base }).DB_POOL_MAX).toBe(5);
+  });
+});
+
+describe('database file store (STORAGE=db)', () => {
+  it('is for the demo only in production', () => {
+    expect(() => loadConfig({ ...prod, ALLOW_FAKE_PAYMENTS: 'true', STORAGE: 'db' })).toThrow(/STORAGE=db/);
+    expect(loadConfig({ ...prod, SMTP_HOST: '', ALLOW_FAKE_PAYMENTS: 'true', DEMO_MODE: 'true', STORAGE: 'db' }).STORAGE).toBe('db');
+  });
+  it('saves, reads and removes files', async () => {
+    const { db } = await setup();
+    const store = createObjectStore(createDbBackend(db));
+    const data = Buffer.from([0xff, 0xd8, 0xff, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    const key = await store.save(data, 'jpg');
+    const back = await store.read(key);
+    expect(back?.mime).toBe('image/jpeg');
+    expect(back?.data.equals(data)).toBe(true);
+    await store.remove(key);
+    expect(await store.read(key)).toBeNull();
   });
 });
 

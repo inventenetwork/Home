@@ -37,6 +37,7 @@ import { catalogRouter } from './catalog/routes.js';
 import { requireAuth, requireRole } from './auth/middleware.js';
 import type { Config } from './config.js';
 import type { Db } from './db/index.js';
+import { DEMO_ACCOUNTS } from './auth/demo.js';
 import type { Mailer } from './mailer.js';
 import { FakeGateway, fakeGatewaySecret } from './payments/fake.js';
 import { fakeCheckoutRouter } from './payments/fake-page.js';
@@ -125,6 +126,7 @@ export function createApp({ cfg, db, mailer, now = () => new Date(), googleVerif
         minLeadHours: b.minLeadHours,
         freeCancelHours: b.freeCancelHours,
         paymentGateway: gateway.name, // 'fake' shows a "test payments" notice in the web app
+        demo: cfg.DEMO_MODE === 'true' ? { password: cfg.DEMO_PASSWORD, accounts: DEMO_ACCOUNTS.map((a) => ({ username: a.username, label: a.label })) } : null,
         legal: { company: cfg.COMPANY_NAME, email: cfg.SUPPORT_EMAIL, version: LEGAL_VERSION },
       });
     } catch (err) {

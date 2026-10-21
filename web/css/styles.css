@@ -347,3 +347,6 @@ td.heat[data-level="3"] { background: color-mix(in srgb, var(--primary) 42%, tra
 td.heat[data-level="4"] { background: color-mix(in srgb, var(--primary) 58%, transparent); }
 td.heat[data-level="5"] { background: color-mix(in srgb, var(--primary) 75%, transparent); color: #fff; }
 table.trend .total-row th, table.trend .total-row td { border-top: 2px solid var(--border); font-weight: 600; }
+
+.demo-accounts { display: grid; gap: 8px; }
+.demo-account { text-align: left; }

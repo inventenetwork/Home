@@ -3,9 +3,13 @@ import { loadConfig, type Config } from './config.js';
 import { createDbFromConfig, type Db } from './db/index.js';
 import { migrate } from './db/migrate.js';
 import { createMailer } from './mailer.js';
-import { createDiskStore, createObjectStore, createS3Backend, type ImageStore } from './storage.js';
+import { createDbBackend, createDiskStore, createObjectStore, createS3Backend, type ImageStore } from './storage.js';
 
-export function createStoreFromConfig(cfg: Config): ImageStore {
+export function createStoreFromConfig(cfg: Config, db?: Db): ImageStore {
+  if (cfg.STORAGE === 'db') {
+    if (!db) throw new Error('STORAGE=db needs the database');
+    return createObjectStore(createDbBackend(db));
+  }
   if (cfg.STORAGE === 's3') {
     return createObjectStore(
       createS3Backend({ bucket: cfg.S3_BUCKET!, region: cfg.S3_REGION, endpoint: cfg.S3_ENDPOINT, accessKeyId: cfg.S3_ACCESS_KEY_ID!, secretAccessKey: cfg.S3_SECRET_ACCESS_KEY!, prefix: cfg.S3_PREFIX }),
@@ -29,6 +33,6 @@ export async function createRuntime(env: Record<string, string | undefined> = pr
       })
     : await migrate(db);
   if (applied.length) console.log(`Applied migrations: ${applied.join(', ')}`);
-  const app = createApp({ cfg, db, mailer: createMailer(cfg), store: createStoreFromConfig(cfg) });
+  const app = createApp({ cfg, db, mailer: createMailer(cfg), store: createStoreFromConfig(cfg, db) });
   return { cfg, db, app };
 }

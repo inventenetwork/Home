@@ -418,3 +418,20 @@ Re-running the seed never overwrites prices or the `active` flag you changed lat
 
 Also still to do: Apple sign-in, an automatic clean-up of old financial records once the retention period has passed.
 
+
+
+## Demo logins (no email needed)
+
+Set `DEMO_MODE=true` (and optionally `DEMO_PASSWORD`, default `demo1234`). The login page then shows a username/password form with three accounts, created on first use:
+
+| Username | Role | What it sees |
+|---|---|---|
+| `admin` | Super admin | Admin panel: bookings, providers, services, analytics, settings |
+| `vendor` | Provider | Approved vendor covering every area and service, available 08:00-20:00 |
+| `user` | Customer | Customer with one saved address |
+
+Emailed codes and Google sign-in are hidden while it is on. In production it needs `ALLOW_FAKE_PAYMENTS=true` and no SMTP. Turn it off (`DEMO_MODE=false`) for anything real.
+
+### Vercel demo without a file bucket or SMTP
+
+For a small labelled demo you only need Postgres (Neon) plus env vars: set `DEMO_MODE=true`, `ALLOW_FAKE_PAYMENTS=true` and `STORAGE=db` (photos and ID documents are kept in the database table `stored_files`, so no S3/R2 bucket). Add `JWT_SECRET`, `OTP_SECRET`, `DATA_KEY`, `CRON_SECRET`, `ADMIN_EMAIL`, `COMPANY_NAME`, `SUPPORT_EMAIL`. In production `STORAGE=db` is refused unless `DEMO_MODE=true`; use `STORAGE=s3` for real use.
