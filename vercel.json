@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "npm run build",
+  "regions": ["sin1"],
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "{dist,migrations,web}/**",
+      "maxDuration": 30,
+      "memory": 1024
+    }
+  },
+  "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
+  "crons": [{ "path": "/internal/housekeeping", "schedule": "0 18 * * *" }]
+}
