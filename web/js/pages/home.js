@@ -45,7 +45,7 @@ async function fromPrice(slug) {
 }
 
 /** Gentle, Apple-style motion: content fades up as it scrolls into view, the hero drifts with the pointer, cards get a soft spotlight. */
-function addMotion(page) {
+function addMotion(page, ctx) {
   if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
 
   if ('IntersectionObserver' in window) {
@@ -61,7 +61,7 @@ function addMotion(page) {
     for (const el of items) {
       const n = seen.get(el.parentElement) ?? 0;
       seen.set(el.parentElement, n + 1);
-      el.style.setProperty('--d', `${Math.min(n, 5) * 70}ms`);
+      el.style.setProperty('--d', `${Math.min(n, 5) * 90}ms`);
       el.classList.add('reveal');
       io.observe(el);
     }
@@ -69,17 +69,44 @@ function addMotion(page) {
 
   const hero = page.querySelector('.landing-hero');
   if (hero) {
+    // sparks drifting up behind the hero
+    const sparks = h('div', { class: 'sparks', 'aria-hidden': 'true' }, Array.from({ length: 10 }, () => h('span')));
+    hero.prepend(sparks);
+
     hero.addEventListener('pointermove', (e) => {
       const r = hero.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width - 0.5;
-      const y = (e.clientY - r.top) / r.height - 0.5;
-      hero.style.setProperty('--px', `${(x * 22).toFixed(1)}px`);
-      hero.style.setProperty('--py', `${(y * 16).toFixed(1)}px`);
+      hero.style.setProperty('--mx', ((e.clientX - r.left) / r.width - 0.5).toFixed(3));
+      hero.style.setProperty('--my', ((e.clientY - r.top) / r.height - 0.5).toFixed(3));
     });
     hero.addEventListener('pointerleave', () => {
-      hero.style.setProperty('--px', '0px');
-      hero.style.setProperty('--py', '0px');
+      hero.style.setProperty('--mx', '0');
+      hero.style.setProperty('--my', '0');
     });
+
+    // the big buttons lean towards the pointer
+    for (const btn of hero.querySelectorAll('.btn-lg')) {
+      btn.addEventListener('pointermove', (e) => {
+        const r = btn.getBoundingClientRect();
+        btn.style.setProperty('--bx', `${((e.clientX - r.left - r.width / 2) * 0.18).toFixed(1)}px`);
+        btn.style.setProperty('--by', `${((e.clientY - r.top - r.height / 2) * 0.3).toFixed(1)}px`);
+      });
+      btn.addEventListener('pointerleave', () => {
+        btn.style.setProperty('--bx', '0px');
+        btn.style.setProperty('--by', '0px');
+      });
+    }
+
+    // the hero eases upwards a little as the page scrolls
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        hero.style.setProperty('--sy', String(Math.min(window.scrollY, 700)));
+      });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    ctx?.onCleanup?.(() => window.removeEventListener('scroll', onScroll));
   }
 
   page.addEventListener('pointermove', (e) => {
@@ -88,10 +115,12 @@ function addMotion(page) {
     const r = card.getBoundingClientRect();
     card.style.setProperty('--cx', `${e.clientX - r.left}px`);
     card.style.setProperty('--cy', `${e.clientY - r.top}px`);
+    card.style.setProperty('--rx', ((e.clientX - r.left) / r.width - 0.5).toFixed(3));
+    card.style.setProperty('--ry', ((e.clientY - r.top) / r.height - 0.5).toFixed(3));
   });
 }
 
-export async function homePage() {
+export async function homePage(ctx) {
   const [{ services }, areas] = await Promise.all([
     api('GET', '/services', { auth: false }),
     api('GET', '/areas', { auth: false }).then((r) => (r.areas?.length ? r.areas : FALLBACK_AREAS)).catch(() => FALLBACK_AREAS),
@@ -176,6 +205,6 @@ export async function homePage() {
       ),
     ),
   );
-  addMotion(page);
+  addMotion(page, ctx);
   return page;
 }
