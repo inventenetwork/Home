@@ -44,6 +44,53 @@ async function fromPrice(slug) {
   }
 }
 
+/** Gentle, Apple-style motion: content fades up as it scrolls into view, the hero drifts with the pointer, cards get a soft spotlight. */
+function addMotion(page) {
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+
+  if ('IntersectionObserver' in window) {
+    const items = [...page.querySelectorAll('.trust-item, .block-title, .block-sub, .service-card, .how-step, .area-chip, .provider-band')];
+    const seen = new Map();
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    for (const el of items) {
+      const n = seen.get(el.parentElement) ?? 0;
+      seen.set(el.parentElement, n + 1);
+      el.style.setProperty('--d', `${Math.min(n, 5) * 70}ms`);
+      el.classList.add('reveal');
+      io.observe(el);
+    }
+  }
+
+  const hero = page.querySelector('.landing-hero');
+  if (hero) {
+    hero.addEventListener('pointermove', (e) => {
+      const r = hero.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5;
+      const y = (e.clientY - r.top) / r.height - 0.5;
+      hero.style.setProperty('--px', `${(x * 22).toFixed(1)}px`);
+      hero.style.setProperty('--py', `${(y * 16).toFixed(1)}px`);
+    });
+    hero.addEventListener('pointerleave', () => {
+      hero.style.setProperty('--px', '0px');
+      hero.style.setProperty('--py', '0px');
+    });
+  }
+
+  page.addEventListener('pointermove', (e) => {
+    const card = e.target instanceof Element ? e.target.closest('a.service-card') : null;
+    if (!card) return;
+    const r = card.getBoundingClientRect();
+    card.style.setProperty('--cx', `${e.clientX - r.left}px`);
+    card.style.setProperty('--cy', `${e.clientY - r.top}px`);
+  });
+}
+
 export async function homePage() {
   const [{ services }, areas] = await Promise.all([
     api('GET', '/services', { auth: false }),
@@ -77,7 +124,7 @@ export async function homePage() {
   const quick = services.filter((s) => s.pricingModel !== 'quote').slice(0, 4);
   const toServices = () => document.getElementById('services')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-  return h('div', { class: 'landing' },
+  const page = h('div', { class: 'landing' },
     h('section', { class: 'landing-hero' },
       h('div', { class: 'container landing-hero-inner' },
         h('div', { class: 'landing-copy' },
@@ -129,4 +176,6 @@ export async function homePage() {
       ),
     ),
   );
+  addMotion(page);
+  return page;
 }
